@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0f0f0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="IELTS Trainer">
+<meta name="mobile-web-app-capable" content="yes">
+<title>IELTS Trainer</title>
+
+<!-- PWA Manifest inline -->
+<script>
+const manifestData = {
+  name: "IELTS Trainer & Vocabulary",
+  short_name: "IELTS Trainer",
+  description: "Preparazione IELTS con AI e vocabolario personale",
+  start_url: ".",
+  display: "standalone",
+  background_color: "#0f0f0f",
+  theme_color: "#0f0f0f",
+  orientation: "portrait",
+  icons: [
+    { src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%230f0f0f'/><text x='96' y='130' font-size='100' text-anchor='middle' fill='white'>📖</text></svg>", sizes: "192x192", type: "image/svg+xml" }
+  ]
+};
+const blob = new Blob([JSON.stringify(manifestData)], {type: 'application/json'});
+const manifestURL = URL.createObjectURL(blob);
+const link = document.createElement('link');
+link.rel = 'manifest';
+link.href = manifestURL;
+document.head.appendChild(link);
+</script>
+
+<style>
+:root {
+  --bg: #0f0f0f;
+  --bg2: #1a1a1a;
+  --bg3: #242424;
+  --border: rgba(255,255,255,0.1);
+  --border2: rgba(255,255,255,0.2);
+  --text: #f0f0f0;
+  --text2: #a0a0a0;
+  --text3: #666;
+  --accent: #e8e0d0;
+  --green: #4ade80;
+  --amber: #fbbf24;
+  --red: #f87171;
+  --blue: #60a5fa;
+  --radius: 14px;
+  --radius-sm: 8px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+
+.app { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
+
+/* Header */
+.header { padding: 16px 20px 12px; border-bottom: 0.5px solid var(--border); flex-shrink: 0; background: var(--bg); }
+.header-title { font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
+.header-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+/* Tabs */
+.tabs { display: flex; background: var(--bg2); border-bottom: 0.5px solid var(--border); flex-shrink: 0; overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab { flex: 1; min-width: 70px; padding: 12px 8px; font-size: 12px; font-weight: 500; text-align: center; color: var(--text3); background: none; border: none; cursor: pointer; transition: color 0.15s; white-space: nowrap; }
+.tab.active { color: var(--text); border-bottom: 2px solid var(--accent); }
+.tab-icon { font-size: 16px; display: block; margin-bottom: 2px; }
+
+/* Content */
+.content { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.section { display: none; padding: 16px; }
+.section.active { display: block; }
+
+/* Cards */
+.card { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+.card-label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
+
+/* Form elements */
+select, input[type="text"], textarea {
+  width: 100%; background: var(--bg3); border: 0.5px solid var(--border2);
+  border-radius: var(--radius-sm); padding: 12px; font-size: 15px;
+  color: var(--text); font-family: inherit; outline: none;
+  -webkit-appearance: none; transition: border-color 0.15s;
+}
+select:focus, input:focus, textarea:focus { border-color: rgba(255,255,255,0.4); }
+select { background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23666'><path d='M7 10l5 5 5-5z'/></svg>"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 32px; }
+textarea { resize: none; line-height: 1.6; }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 12px 18px; font-size: 14px; font-weight: 500; border-radius: var(--radius-sm);
+  border: 0.5px solid var(--border2); background: transparent; color: var(--text);
+  cursor: pointer; font-family: inherit; transition: background 0.15s; width: 100%; margin-top: 8px; }
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: var(--accent); color: #0f0f0f; border-color: transparent; font-weight: 600; }
+.btn-primary:active { background: #d4ccbc; }
+.btn-row { display: flex; gap: 8px; }
+.btn-row .btn { margin-top: 0; }
+.btn-sm { padding: 8px 14px; font-size: 13px; width: auto; margin-top: 0; }
+
+/* Response */
+.response-box { background: var(--bg3); border-radius: var(--radius-sm); padding: 14px;
+  font-size: 14px; line-height: 1.75; color: var(--text); white-space: pre-wrap; word-break: break-word; }
+.loading { color: var(--text3); font-style: italic; }
+
+/* Vocab */
+.word-row { display: flex; align-items: flex-start; gap: 10px; padding: 12px 0; border-bottom: 0.5px solid var(--border); }
+.word-row:last-child { border-bottom: none; }
+.word-info { flex: 1; min-width: 0; }
+.word-main { font-weight: 600; font-size: 15px; }
+.word-def { font-size: 13px; color: var(--text2); margin-top: 2px; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.badge-b2 { background: rgba(74,222,128,0.15); color: var(--green); }
+.badge-c1 { background: rgba(96,165,250,0.15); color: var(--blue); }
+.badge-c2 { background: rgba(248,113,113,0.15); color: var(--red); }
+.del-btn { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 20px; padding: 0 4px; line-height: 1; flex-shrink: 0; margin-top: 2px; }
+
+/* Flashcard */
+.flashcard { background: var(--bg2); border: 0.5px solid var(--border2); border-radius: var(--radius);
+  padding: 40px 24px; text-align: center; min-height: 200px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s; margin-bottom: 12px; }
+.flashcard:active { background: var(--bg3); }
+.fc-word { font-size: 30px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 8px; }
+.fc-level { font-size: 12px; color: var(--text3); margin-bottom: 6px; }
+.fc-hint { font-size: 13px; color: var(--text3); }
+.fc-def { font-size: 16px; color: var(--text2); margin-top: 12px; line-height: 1.5; }
+.prog-bar { height: 3px; background: var(--bg3); border-radius: 2px; overflow: hidden; margin-bottom: 12px; }
+.prog-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.3s; }
+.fc-btns { display: flex; gap: 10px; }
+.fc-btns .btn { flex: 1; }
+.btn-red { border-color: rgba(248,113,113,0.4); color: var(--red); }
+.btn-green { border-color: rgba(74,222,128,0.4); color: var(--green); }
+
+/* Stats */
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.stat-card { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 16px; text-align: center; }
+.stat-n { font-size: 28px; font-weight: 700; letter-spacing: -1px; }
+.stat-l { font-size: 12px; color: var(--text2); margin-top: 4px; }
+
+/* Install banner */
+.install-banner { background: var(--bg3); border: 0.5px solid var(--border2); border-radius: var(--radius-sm);
+  padding: 14px 16px; margin-bottom: 16px; display: none; }
+.install-banner p { font-size: 13px; color: var(--text2); line-height: 1.5; }
+.install-banner strong { color: var(--accent); }
+
+/* Spacing */
+.gap { margin-bottom: 10px; }
+.row { display: flex; gap: 8px; align-items: stretch; }
+.row select { flex: 0 0 90px; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="header">
+    <div class="header-title">IELTS Trainer 📖</div>
+    <div class="header-sub">AI-powered · Vocabolario · Flashcard</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('trainer', this)">
+      <span class="tab-icon">✍️</span>Trainer
+    </button>
+    <button class="tab" onclick="showTab('vocab', this)">
+      <span class="tab-icon">📚</span>Vocaboli
+    </button>
+    <button class="tab" onclick="showTab('flashcard', this)">
+      <span class="tab-icon">🃏</span>Flashcard
+    </button>
+    <button class="tab" onclick="showTab('stats', this)">
+      <span class="tab-icon">📊</span>Stats
+    </button>
+  </div>
+
+  <div class="content">
+
+    <!-- TRAINER -->
+    <div id="tab-trainer" class="section active">
+
+      <div id="install-banner" class="install-banner">
+        <p>📱 <strong>Installa come app:</strong> Safari → <strong>Condividi</strong> → <strong>"Aggiungi a schermata Home"</strong>. Su Android: menu browser → <strong>"Installa app"</strong>.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Tipo di esercizio</div>
+        <select id="ex-type" onchange="updateLabel()">
+          <option value="writing_task2">Writing Task 2 — Essay</option>
+          <option value="writing_task1">Writing Task 1 — Report/Letter</option>
+          <option value="grammar">Correzione grammaticale</option>
+          <option value="vocab_in_context">Vocabolo in contesto</option>
+          <option value="reading_q">Reading — True/False/NG</option>
+          <option value="speaking">Speaking — Part 2</option>
+        </select>
+      </div>
+
+      <div class="card">
+        <div class="card-label" id="ex-label">Il tuo essay o testo</div>
+        <textarea id="user-input" rows="6" placeholder="Scrivi qui la tua risposta..."></textarea>
+        <div class="btn-row gap" style="margin-top: 10px;">
+          <button class="btn btn-primary btn-sm" style="flex:1;" onclick="runExercise()">Analizza ↗</button>
+          <button class="btn btn-sm" style="flex:1;" onclick="generateTopic()">Topic casuale</button>
+        </div>
+      </div>
+
+      <div id="result-card" class="card" style="display:none;">
+        <div class="card-label">Feedback IELTS</div>
+        <div class="response-box" id="ai-response"></div>
+        <button class="btn" style="margin-top:10px;" onclick="addFromFeedback()">+ Salva parole nel vocabolario ↗</button>
+      </div>
+    </div>
+
+    <!-- VOCABOLARIO -->
+    <div id="tab-vocab" class="section">
+      <div class="card">
+        <div class="card-label">Aggiungi parola</div>
+        <div class="row gap">
+          <input type="text" id="new-word" placeholder="Parola (es. albeit)" style="flex:1;" />
+          <select id="word-level" style="width:80px; flex-shrink:0;">
+            <option value="B2">B2</option>
+            <option value="C1" selected>C1</option>
+            <option value="C2">C2</option>
+          </select>
+        </div>
+        <input type="text" id="new-def" placeholder="Traduzione / definizione italiana" class="gap" />
+        <button class="btn btn-primary" onclick="addWord()">Aggiungi parola</button>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Il mio vocabolario (<span id="word-count">0</span> parole)</div>
+        <div class="row" style="margin-bottom:12px;">
+          <input type="text" id="search-word" placeholder="Cerca..." style="flex:1;" oninput="renderVocab()" />
+          <select id="filter-level" onchange="renderVocab()" style="width:80px; flex-shrink:0;">
+            <option value="">Tutti</option>
+            <option value="B2">B2</option>
+            <option value="C1">C1</option>
+            <option value="C2">C2</option>
+          </select>
+        </div>
+        <div id="vocab-list"></div>
+      </div>
+    </div>
+
+    <!-- FLASHCARD -->
+    <div id="tab-flashcard" class="section">
+      <div id="no-words-fc" class="card" style="display:none;">
+        <p style="font-size:14px; color:var(--text2); text-align:center; padding: 20px 0;">
+          Aggiungi parole nel vocabolario per iniziare il ripasso 📚
+        </p>
+      </div>
+      <div id="fc-area">
+        <div class="prog-bar"><div class="prog-fill" id="fc-prog" style="width:0%"></div></div>
+        <div style="font-size:12px; color:var(--text3); text-align:right; margin-bottom:8px;" id="fc-counter">0 / 0</div>
+        <div class="flashcard" onclick="flipCard()" id="fc-card">
+          <div class="fc-level" id="fc-level">—</div>
+          <div class="fc-word" id="fc-word">—</div>
+          <div class="fc-hint" id="fc-hint">Tocca per vedere la definizione</div>
+          <div class="fc-def" id="fc-def" style="display:none;"></div>
+        </div>
+        <div class="fc-btns">
+          <button class="btn btn-red" onclick="fcResult('hard')">❌ Da ripassare</button>
+          <button class="btn btn-green" onclick="fcResult('ok')">✓ Lo so!</button>
+        </div>
+        <button class="btn" style="margin-top:8px;" onclick="initFC()">🔀 Mescola mazzo</button>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div id="tab-stats" class="section">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-n" id="s-total">0</div><div class="stat-l">parole totali</div></div>
+        <div class="stat-card"><div class="stat-n" id="s-known">0</div><div class="stat-l">conosciute</div></div>
+        <div class="stat-card"><div class="stat-n" id="s-c1c2">0</div><div class="stat-l">C1 / C2</div></div>
+        <div class="stat-card"><div class="stat-n" id="s-sess">0</div><div class="stat-l">esercizi svolti</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Livello stimato</div>
+        <div id="level-msg" style="font-size:14px; line-height:1.7; color:var(--text2);">Fai esercizi e aggiungi parole per vedere la stima.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Come usare al meglio questa app</div>
+        <div style="font-size:13px; color:var(--text2); line-height:1.8;">
+          <p>✍️ <strong style="color:var(--text);">Writing Task 2</strong> — 3 essay a settimana min.</p>
+          <p>📚 <strong style="color:var(--text);">Vocabolario</strong> — punta a 80+ parole C1/C2</p>
+          <p>🃏 <strong style="color:var(--text);">Flashcard</strong> — ripassa ogni giorno 10 min.</p>
+          <p>🎯 <strong style="color:var(--text);">Target Band 7+</strong> — coerenza nel writing e varietà lessicale</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Reset dati</div>
+        <button class="btn btn-red" style="width:100%;" onclick="resetAll()">🗑 Cancella tutti i dati</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+let vocab = [];
+let sessions = 0;
+let fcQueue = [];
+let fcIndex = 0;
+let fcFlipped = false;
+
+try { vocab = JSON.parse(localStorage.getItem('ielts_vocab_v2') || '[]'); } catch(e) {}
+try { sessions = parseInt(localStorage.getItem('ielts_sessions_v2') || '0'); } catch(e) {}
+
+function save() {
+  try {
+    localStorage.setItem('ielts_vocab_v2', JSON.stringify(vocab));
+    localStorage.setItem('ielts_sessions_v2', String(sessions));
+  } catch(e) {}
+}
+
+function showTab(id, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+  if(id === 'vocab') renderVocab();
+  if(id === 'flashcard') initFC();
+  if(id === 'stats') renderStats();
+}
+
+function updateLabel() {
+  const map = {
+    writing_task2: 'Il tuo essay (o lascia vuoto per ricevere una traccia)',
+    writing_task1: 'Descrivi grafico/lettera o lascia vuoto per una traccia',
+    grammar: 'Incolla il testo da correggere',
+    vocab_in_context: 'Scrivi una parola o frase da approfondire',
+    reading_q: 'Incolla paragrafo + domanda True/False/NG',
+    speaking: 'Scrivi la tua risposta Speaking Part 2'
+  };
+  document.getElementById('ex-label').textContent = map[document.getElementById('ex-type').value] || '';
+}
+
+async function generateTopic() {
+  const type = document.getElementById('ex-type').value;
+  const btn = event.target;
+  btn.textContent = '...';
+  btn.disabled = true;
+  const ps = {
+    writing_task2: 'Give one IELTS Writing Task 2 question on a contemporary topic. Only the question.',
+    writing_task1: 'Give one IELTS Writing Task 1 prompt (chart or letter). Only the prompt.',
+    speaking: 'Give one IELTS Speaking Part 2 topic card with 3 bullet points. Only the card.',
+    reading_q: 'Write a short IELTS-style paragraph (4 sentences) followed by 2 True/False/Not Given questions.',
+    grammar: 'Write 3 English sentences with typical Italian learner errors. Ask the student to correct them.',
+    vocab_in_context: 'Give one IELTS C1 word with definition. Ask the student to write a sentence with it.'
+  };
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 300, messages: [{ role: 'user', content: ps[type] || ps.writing_task2 }] })
+    });
+    const d = await r.json();
+    const text = d.content?.map(c => c.text || '').join('') || '';
+    document.getElementById('user-input').value = text;
+  } catch(e) { alert('Errore di rete. Controlla la connessione.'); }
+  btn.textContent = 'Topic casuale';
+  btn.disabled = false;
+}
+
+async function runExercise() {
+  const type = document.getElementById('ex-type').value;
+  const input = document.getElementById('user-input').value.trim();
+  if(!input) { await generateTopic(); return; }
+
+  const card = document.getElementById('result-card');
+  card.style.display = 'block';
+  const box = document.getElementById('ai-response');
+  box.innerHTML = '<span class="loading">Analisi in corso...</span>';
+
+  const systems = {
+    writing_task2: 'You are an expert IELTS examiner. Evaluate the Writing Task 2 essay using official band descriptors (Task Achievement, Coherence & Cohesion, Lexical Resource, Grammatical Range & Accuracy). Give: 1) Estimated band score, 2) Strengths, 3) Areas to improve, 4) Three C1-level vocabulary suggestions. Be encouraging but honest. Target: Band 7+.',
+    writing_task1: 'You are an IELTS examiner. Evaluate this Writing Task 1 response. Give band estimate, feedback on overview, key features, data, vocabulary, grammar. Suggest 3 useful academic phrases.',
+    grammar: 'You are an English teacher for Italian learners. Identify grammar errors, explain each for an Italian learner (mention Italian interference if relevant), give corrected version. List 3 grammar rules to study.',
+    vocab_in_context: 'You are an IELTS vocabulary coach. Explain: etymology, register, IELTS contexts, 2 example sentences, collocations, one word to avoid confusion. Suggest 2 related C1 words.',
+    reading_q: 'You are an IELTS Reading examiner. For the paragraph and T/F/NG questions, explain correct answers step by step, quoting the exact justifying text. Explain common traps.',
+    speaking: 'You are an IELTS Speaking examiner. Evaluate this Part 2 response for Fluency, Lexical Resource, Grammar, Pronunciation. Give band estimate and 5 better vocabulary choices.'
+  };
+
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: systems[type] || systems.writing_task2,
+        messages: [{ role: 'user', content: input }]
+      })
+    });
+    const d = await r.json();
+    const text = d.content?.map(c => c.text || '').join('') || 'Nessuna risposta.';
+    box.textContent = text;
+    sessions++;
+    save();
+  } catch(e) {
+    box.textContent = 'Errore di rete. Assicurati di essere connesso.';
+  }
+}
+
+function addFromFeedback() {
+  const text = document.getElementById('ai-response').textContent.substring(0, 600);
+  showTab('vocab', document.querySelectorAll('.tab')[1]);
+  document.getElementById('new-word').focus();
+  alert('Aggiungi manualmente le parole suggerite nel feedback!\n\nGuarda le sezioni "vocabulary suggestions" nel testo.');
+}
+
+function addWord() {
+  const w = document.getElementById('new-word').value.trim();
+  const d = document.getElementById('new-def').value.trim();
+  const l = document.getElementById('word-level').value;
+  if(!w) { document.getElementById('new-word').focus(); return; }
+  if(vocab.find(v => v.word.toLowerCase() === w.toLowerCase())) {
+    alert('Parola già presente!'); return;
+  }
+  vocab.unshift({ word: w, def: d || '—', level: l, added: Date.now(), known: false });
+  save();
+  document.getElementById('new-word').value = '';
+  document.getElementById('new-def').value = '';
+  document.getElementById('new-word').focus();
+  renderVocab();
+}
+
+function renderVocab() {
+  const search = (document.getElementById('search-word')?.value || '').toLowerCase();
+  const fl = document.getElementById('filter-level')?.value || '';
+  const list = vocab.filter(v => {
+    const ms = !search || v.word.toLowerCase().includes(search) || v.def.toLowerCase().includes(search);
+    const ml = !fl || v.level === fl;
+    return ms && ml;
+  });
+  document.getElementById('word-count').textContent = vocab.length;
+  const el = document.getElementById('vocab-list');
+  if(!list.length) { el.innerHTML = '<p style="font-size:13px;color:var(--text3);padding:10px 0;">Nessuna parola trovata.</p>'; return; }
+  el.innerHTML = list.map(v => {
+    const i = vocab.indexOf(v);
+    const bc = v.level === 'C2' ? 'badge-c2' : v.level === 'C1' ? 'badge-c1' : 'badge-b2';
+    return `<div class="word-row">
+      <div class="word-info">
+        <div class="word-main">${v.word} <span class="badge ${bc}">${v.level}</span></div>
+        <div class="word-def">${v.def}</div>
+      </div>
+      <button class="del-btn" onclick="removeWord(${i})">×</button>
+    </div>`;
+  }).join('');
+}
+
+function removeWord(i) {
+  if(confirm('Rimuovere "' + vocab[i].word + '"?')) {
+    vocab.splice(i, 1);
+    save();
+    renderVocab();
+  }
+}
+
+function initFC() {
+  if(!vocab.length) {
+    document.getElementById('no-words-fc').style.display = 'block';
+    document.getElementById('fc-area').style.display = 'none';
+    return;
+  }
+  document.getElementById('no-words-fc').style.display = 'none';
+  document.getElementById('fc-area').style.display = 'block';
+  fcQueue = [...vocab].sort(() => Math.random() - 0.5);
+  fcIndex = 0;
+  showFC();
+}
+
+function showFC() {
+  fcFlipped = false;
+  if(fcIndex >= fcQueue.length) { fcIndex = 0; }
+  const v = fcQueue[fcIndex];
+  document.getElementById('fc-word').textContent = v.word;
+  document.getElementById('fc-level').textContent = v.level;
+  document.getElementById('fc-hint').style.display = 'block';
+  document.getElementById('fc-hint').textContent = 'Tocca per vedere la definizione';
+  document.getElementById('fc-def').style.display = 'none';
+  document.getElementById('fc-def').textContent = v.def;
+  const pct = Math.round((fcIndex / fcQueue.length) * 100);
+  document.getElementById('fc-prog').style.width = pct + '%';
+  document.getElementById('fc-counter').textContent = (fcIndex + 1) + ' / ' + fcQueue.length;
+}
+
+function flipCard() {
+  if(!fcFlipped) {
+    fcFlipped = true;
+    document.getElementById('fc-hint').style.display = 'none';
+    document.getElementById('fc-def').style.display = 'block';
+  }
+}
+
+function fcResult(r) {
+  const v = fcQueue[fcIndex];
+  const orig = vocab.find(x => x.word === v.word);
+  if(orig) orig.known = (r === 'ok');
+  save();
+  fcIndex++;
+  if(fcIndex >= fcQueue.length) {
+    alert('🎉 Mazzo completato! ' + vocab.filter(x => x.known).length + ' parole conosciute su ' + vocab.length);
+    fcIndex = 0;
+    fcQueue = [...vocab].sort(() => Math.random() - 0.5);
+  }
+  showFC();
+}
+
+function renderStats() {
+  const total = vocab.length;
+  const known = vocab.filter(v => v.known).length;
+  const c1c2 = vocab.filter(v => v.level !== 'B2').length;
+  document.getElementById('s-total').textContent = total;
+  document.getElementById('s-known').textContent = known;
+  document.getElementById('s-c1c2').textContent = c1c2;
+  document.getElementById('s-sess').textContent = sessions;
+  let msg = 'Fai esercizi e aggiungi parole per vedere la stima.';
+  if(total > 0 && sessions > 0) {
+    if(c1c2 >= 50 && known >= 30 && sessions >= 10) msg = '🟢 Ottimo! Sei vicino al Band 7. Concentrati su coerenza nel Writing e fluidità nello Speaking.';
+    else if(c1c2 >= 20 && sessions >= 5) msg = '🟡 Buon progresso! Continua flashcard quotidiane e almeno 3 essay a settimana.';
+    else msg = '🔵 Inizio solido. Punta a 50+ parole C1/C2 e pratica il Writing Task 2 regolarmente.';
+  }
+  document.getElementById('level-msg').textContent = msg;
+}
+
+function resetAll() {
+  if(confirm('Sicuro? Tutti i dati (vocabolario, progressi) saranno cancellati.')) {
+    vocab = []; sessions = 0;
+    save();
+    renderVocab();
+    alert('Dati cancellati.');
+  }
+}
+
+// Show install banner on mobile
+if(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+  document.getElementById('install-banner').style.display = 'block';
+}
+
+// Register service worker for offline
+if('serviceWorker' in navigator) {
+  const sw = `
+    const CACHE = 'ielts-v1';
+    self.addEventListener('install', e => {
+      e.waitUntil(caches.open(CACHE).then(c => c.addAll(['/'])));
+      self.skipWaiting();
+    });
+    self.addEventListener('fetch', e => {
+      if(e.request.url.includes('api.anthropic.com')) return;
+      e.respondWith(
+        caches.match(e.request).then(r => r || fetch(e.request).catch(() => caches.match('/')))
+      );
+    });
+  `;
+  const blob = new Blob([sw], {type: 'application/javascript'});
+  navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
+}
+
+// Init
+renderVocab();
+</script>
+</body>
+</html>
